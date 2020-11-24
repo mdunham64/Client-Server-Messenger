@@ -1,27 +1,91 @@
 from threading import Thread
-
-class User(Thread):
-    def __init__(self):
-        _username = None
-        _password = None
-        _ip_address = None
-        _port_number = None
-    # Needs to be able to create user
-    # Needs to be able to sign in
-    # be able to connect to server
-    # be able to send/rcv messages
-
-    pass
-
-class Client(Thread):
-    pass
-    # to listen for servers response messages.
-    # Connect to server and send messages
-    # THIS NEEDS TO BE UNIQUE PORT NUMBER FOR SERVER TO SEND TO.
-
-class Client_Server:
-    pass
-    # to listen for servers incoming messages from others.
-    # THIS NEEDS TO BE UNIQUE PORT NUMBER FOR SERVER TO SEND TO.
+import socket
 
 
+class Client:
+    def __init__(self, ip: str, port: int):
+        self.__ip = ip
+        self.__port = port
+        self.__is_connected = False
+        self.__client_socket = None
+
+    def connect(self):
+        self.__client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.__client_socket.connect((self.__ip, self.__port))
+        self.__is_connected = True
+
+    def send_message(self, msg: str):
+        self.__client_socket.send(msg.encode("UTF-16"))
+
+    def receive_message(self):
+        return self.__client_socket.recv(1024).decode("UTF-16")
+
+    def disconnect(self):
+        self.__client_socket.close()
+        self.__is_connected = False
+
+    @property
+    def is_connected(self):
+        return self.__is_connected
+
+
+class Client_Listener(Thread): # server worker
+    def __init__(self, ip: str, port: int):
+        super().__init__()
+        self.__ip = ip
+        self.__port = port
+        self.__is_connected = False
+        self.__client_socket = None
+
+    def connect(self):
+        self.__client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.__client_socket.connect((self.__ip, self.__port))
+        self.__is_connected = True
+
+    def receive_message(self):
+        return self.__client_socket.recv(1024).decode("UTF-16")
+
+    def disconnect(self):
+        self.__client_socket.close()
+        self.__is_connected = False
+
+    @property
+    def is_connected(self):
+        return self.__is_connected
+
+
+if __name__ == "__main__":
+    keep_running = True
+    client = Client("127.0.0.1", 10000)
+    client_listener = Client_Listener("127.0.0.1", 10001)
+
+    while keep_running:
+        print("=" * 80)
+        print(f"""{"Main Menu":^80}""")
+        print("=" * 80)
+        print("1. Connect to server")
+        print("2. Login")
+        print("3. Send Message")
+        print("4. Print Received Messages")
+        print("5. Disconnect")
+        option = int(input("Select option [1-5]>"))
+        if option == 1:
+            client.connect()  # We can ask ip/port here
+            response = client.receive_message()
+            print(response)
+        elif option == 2:
+            # login the user
+            # prompt for sub menu - 1 to create user, 2 to login (prot: USR and LOG respectively)
+            client_listener.start()
+            pass
+        elif option == 3:
+            # send message
+            pass
+        elif option == 4:
+            # print received messages
+            pass
+        elif option == 5:
+            # send protocol OUT|OK
+            client.disconnect()
+        else:
+            print("Invalid Option, try again. \n\n")
