@@ -2,15 +2,38 @@ from threading import Thread
 import socket
 
 
-class User(Thread):
-    def __init__(self):
-        super().__init__()
-        _username = None
-        _password = None
-        _ip_address = None
-        _port_number = None
+class User:
+    def __init__(self, rport: int):
+        self.username = None
+        self.password = None
+        self.display_name = None
+        self.port_number_receive = rport
+        self.port_number_broadcast = None
+        self.message_list = []
 
-    pass
+    @property
+    def username(self):
+        return self._username
+
+    @username.setter
+    def username(self, name):
+        self.__username = name
+
+    @property
+    def password(self):
+        return self._password
+
+    @password.setter
+    def password(self, password):
+        self._password = password
+
+    @property
+    def display_name(self):
+        return self._display_name
+
+    @display_name.setter
+    def display_name(self, display_name):
+        self._username = display_name
 
 
 class Server(Thread):
@@ -24,6 +47,10 @@ class Server(Thread):
         self.__connection_count = 0
         self.__list_cw = []
 
+    @property
+    def list_cw(self):
+        return self.__list_cw
+
     def run(self):
         self.__server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.__server_socket.bind((self.__ip, self.__port))
@@ -35,7 +62,9 @@ class Server(Thread):
                 client_socket, client_address = self.__server_socket.accept()
                 self.__connection_count += 1
                 print(f"""[SRV] Got a connection from {client_address}""")
-                cw = ClientWorker(self.__connection_count, client_socket, self)
+                user = User(client_address[1])
+                cw = ClientWorker(client_socket, self, user)
+                # each clientworker will be one port, but a client will have 2 ports open, one for sending, one receiving
                 self.__list_cw.append(cw)
                 cw.start()
             except Exception as e:
@@ -52,12 +81,16 @@ class Server(Thread):
 
 
 class ClientWorker(Thread):
-    def __init__(self, client_id: int, client_socket: socket, server: Server):
+    def __init__(self, client_socket: socket, server: Server, user: User):
         super().__init__()
         self.__client_socket = client_socket
         self.__keep_running_client = True
         self.__server = server
-        self.__id = client_id
+        self.__user = user
+
+    @property
+    def user(self):
+        return self.__user
 
     def run(self):
         self._send_message("Connected to Python Library Server")
@@ -93,18 +126,36 @@ class ClientWorker(Thread):
 
         try:
             if arguments[0] == "USR":  # USR|USERNAME|PASSWORD|DISPLAY_NAME
-                response = "0|OK"
+                checker = False
+
+                for cw in self.__server.list_cw:
+                    if cw.__user.username == arguments[1]:
+                        checker = True
+
+                if checker:
+                    response = "1|This user name already exists"
+                else:
+                    self.user.username = arguments[1]
+                    self.user.password = arguments[2]
+                    self.user.display_name = arguments[3]
+                    response = "0|OK, user created."
+
                 self._send_message(response)
+
             elif arguments[0] == "LOG":  # LOG|USERNAME|PASSWORD
-                self.__keep_running_client = False
+                self.__user.username(arguments[1])
+                self.__user.password(arguments[2])
+                # enter user credential information, differeniate ports
                 response = "0|OK"
                 self._send_message(response)
             elif arguments[0] == "OUT":  # OUT|OK
                 response = "0|OK"
-            elif arguments[0] == "MSG":  # MSG|USERNAME_FROM|USERNAME_TO|MESSAGE
                 self.__keep_running_client = False
+                if ValueError:
+                    response = "ERR|"
                 self._send_message(response)
-                self.__server.terminate_server()
+            elif arguments[0] == "MSG":  # MSG|USERNAME_FROM|USERNAME_TO|MESSAGE
+
                 response = "0|OK"
             else:
                 response = "ERR|Unknown Command."

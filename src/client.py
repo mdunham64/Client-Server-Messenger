@@ -76,6 +76,23 @@ if __name__ == "__main__":
         elif option == 2:
             # login the user
             # prompt for sub menu - 1 to create user, 2 to login (prot: USR and LOG respectively)
+            choice = int(input("Please enter 1: to login\n2: to create new user."))
+            if choice == 1:
+                request = "LOG|"
+                login = str(input("Please enter your user name>"))
+                password = str(input("Please enter your password>"))
+                request += login + "|" + password
+                client.send_message(request)
+            elif choice == 2:
+                request = "USR|"
+                login = str(input("Please enter your desired user name>"))
+                password = str(input("Please enter your desired password>"))
+                display_name = str(input("Please enter your desired display name>"))
+                request += login + "|" + password + "|" + display_name
+                client.send_message(request)
+
+            response = client.receive_message()
+            print(response)
             client_listener.start()
             pass
         elif option == 3:
