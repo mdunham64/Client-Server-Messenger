@@ -76,7 +76,7 @@ if __name__ == "__main__":
         elif option == 2:
             # login the user
             # prompt for sub menu - 1 to create user, 2 to login (prot: USR and LOG respectively)
-            choice = int(input("Please enter 1: to login\n2: to create new user."))
+            choice = int(input("Please enter 1 to login or 2 to create new user>"))
             if choice == 1:
                 request = "LOG|"
                 login = str(input("Please enter your user name>"))
@@ -103,6 +103,9 @@ if __name__ == "__main__":
             pass
         elif option == 5:
             # send protocol OUT|OK
+            client.send_message("OUT|")
+            response = client.receive_message()
+            print(response)
             client.disconnect()
         else:
             print("Invalid Option, try again. \n\n")
