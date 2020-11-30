@@ -151,8 +151,6 @@ class ClientWorker(Thread):
             elif arguments[0] == "OUT":  # OUT|OK
                 response = "0|OK"
                 self.__keep_running_client = False
-                if ValueError:
-                    response = "ERR|"
                 self._send_message(response)
             elif arguments[0] == "MSG":  # MSG|USERNAME_FROM|USERNAME_TO|MESSAGE
 
