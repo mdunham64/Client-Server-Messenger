@@ -8,6 +8,7 @@ class Client:
         self.__port = port
         self.__is_connected = False
         self.__client_socket = None
+        self.__is_logged_in = False
 
     def connect(self):
         self.__client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -28,6 +29,13 @@ class Client:
     def is_connected(self):
         return self.__is_connected
 
+    @property
+    def is_logged_in(self):
+        return self.__is_logged_in
+
+    @is_logged_in.setter
+    def is_logged_in(self, booly: bool):
+        self.__is_logged_in = booly
 
 class Client_Listener(Thread): # server worker
     def __init__(self, ip: str, port: int):
@@ -56,7 +64,7 @@ class Client_Listener(Thread): # server worker
 
 if __name__ == "__main__":
     keep_running = True
-    client = Client("127.0.0.1", 10000)
+    client = Client("127.0.0.1", 11003)
     client_listener = Client_Listener("127.0.0.1", 10001)
 
     while keep_running:
@@ -83,6 +91,14 @@ if __name__ == "__main__":
                 password = str(input("Please enter your password>"))
                 request += login + "|" + password
                 client.send_message(request)
+                login_response = client.receive_message()
+                if login_response == "0|OK":
+                    client.is_logged_in = True
+                    print("Logged In")
+                    client_listener.start()
+                else:
+                    print(login_response)
+
             elif choice == 2:
                 request = "USR|"
                 login = str(input("Please enter your desired user name>"))
@@ -90,11 +106,8 @@ if __name__ == "__main__":
                 display_name = str(input("Please enter your desired display name>"))
                 request += login + "|" + password + "|" + display_name
                 client.send_message(request)
+                response = client.receive_message()
 
-            response = client.receive_message()
-            print(response)
-            client_listener.start()
-            pass
         elif option == 3:
             # send message
             pass
