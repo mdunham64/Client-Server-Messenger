@@ -160,16 +160,9 @@ class ClientWorker(Thread):
                         return
                 name_check = False
                 pw_check = False
-                #TODO : Fix this nested for loop for user/pw checking
                 for u in self.__server.user_list:
                     if arguments[1] == u.username:
-                        name_check = True
-                for pw in self.__server.user_list:
-                    if arguments[2] == pw.password and name_check:
-                        pw_check = True
-                for u in self.__server.user_list:
-                    if name_check:
-                        if pw_check:
+                        if arguments[2] == u.password:
                             response = "0|OK"
                             self.__user.username = arguments[1]
                             self.__user.password = arguments[2]
@@ -177,12 +170,8 @@ class ClientWorker(Thread):
                             for cw in self.__server.list_cw:
                                 print(cw.user.username + " line 169")
                             return
-
-                    if not name_check:
-                        response = "1|INVALID CREDENTIALS(user not found)"
-                        self._send_message(response)
-                        return
-
+                    else:
+                        response = "1|Invalid Credentials"
             elif arguments[0] == "OUT":  # OUT|OK
                 response = "0|OK"
                 self.__keep_running_client = False
