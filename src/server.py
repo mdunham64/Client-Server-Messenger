@@ -1,14 +1,15 @@
+import json
 from threading import Thread
 import socket
 
 
 class User:
-    def __init__(self, pnb=11999, rport=0):
+    def __init__(self, rport=0):
         self.__username = None
         self.__password = None
         self.__display_name = None
         self.port_number_receive = rport
-        self.port_number_broadcast = pnb
+        self.port_number_broadcast = None
         self.ip = None
         self.message_list = []
 
@@ -61,7 +62,6 @@ class Server(Thread):
         self.__server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.__server_socket.bind((self.__ip, self.__port))
         self.__server_socket.listen(self.__backlog)
-        broadcast_port = 12000
 
         while self.__keep_running:
             print(f"""[SRV] Waiting for Client""")
@@ -69,11 +69,9 @@ class Server(Thread):
                 client_socket, client_address = self.__server_socket.accept()
                 self.__connection_count += 1
                 print(f"""[SRV] Got a connection from {client_address}""")
-
-                user = User(client_address[1], broadcast_port)
+                user = User(client_address[1])
                 user.ip = client_address[0]
                 cw = ClientWorker(client_socket, self, user)
-                broadcast_port = broadcast_port + 1
                 self.list_cw.append(cw)
                 # each clientworker will be one port, but a client will have 2 ports open, one for sending, one receiving
                 cw.start()
@@ -115,7 +113,7 @@ class ClientWorker(Thread):
         self.__client_socket.close()
 
     def _display_message(self, message: str):
-        print(f"CLIENT >> {message}")
+        print(f" {message}")
 
     def _send_message(self, msg: str):
         self._display_message(f"""SEND>> {msg}""")
@@ -126,12 +124,6 @@ class ClientWorker(Thread):
         msg = self.__client_socket.recv(max_length).decode("UTF-16")
         self._display_message(f"""RCV>> {msg}""")
         return msg
-
-    def send_msg_listener(self, message:str, ipee:str):
-        self.__client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.__client_socket.connect((ipee, self.user.port_number_broadcast))
-        self.__client_socket.send(message.encode("UTF-16"))
-        self.__client_socket.close()
 
 
     def _process_client_request(self):
@@ -170,8 +162,6 @@ class ClientWorker(Thread):
                         response = "2|Already Logged In"
                         self._send_message(response)
                         return
-                name_check = False
-                pw_check = False
                 for u in self.__server.user_list:
                     if arguments[1] == u.username:
                         if arguments[2] == u.password:
@@ -182,8 +172,12 @@ class ClientWorker(Thread):
                             for cw in self.__server.list_cw:
                                 print(cw.user.username + " line 169")
                             return
+                        else:
+                            response = "1|Invalid password"
+                            self._send_message(response)
                     else:
                         response = "1|Invalid Credentials"
+                        self._send_message(response)
             elif arguments[0] == "OUT":  # OUT|OK
                 response = "0|OK"
                 self.__keep_running_client = False
@@ -192,11 +186,6 @@ class ClientWorker(Thread):
                     print(cw.user.username + " the end")
                 self._send_message(response)
             elif arguments[0] == "MSG":  # MSG|USERNAME_FROM|USERNAME_TO|MESSAGE
-                for cw in self.__server.list_cw:
-                    if arguments[2] == cw.user.username:
-                        cw.send_msg_listener(arguments[3], cw.user.ip)
-                        response = "OK|test today"
-                self._send_message(response)
                 response = "0|OK"
             else:
                 response = "ERR|Unknown Command."
@@ -229,7 +218,6 @@ if __name__ == '__main__':
                 raise RuntimeError("Server already started.")
         elif option == 3:
             server.terminate_server()
-            dontexit = False
         elif option == 4:
             # Save data to file
             pass
