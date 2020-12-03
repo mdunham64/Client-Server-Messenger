@@ -38,34 +38,35 @@ class Client:
         self.__is_logged_in = booly
 
 class Client_Listener(Thread): # server worker
-    def __init__(self, ip: str, port: int):
-        super().__init__()
-        self.__ip = ip
-        self.__port = port
-        self.__is_connected = False
-        self.__client_socket = None
+        def __init__(self, ip: str, port: int, backlog=5):
+            super().__init__()
+            self.__ip = ip
+            self.__port = port
+            self.__backlog = backlog
+            self.__keep_running = True
 
-    def connect(self):
-        self.__client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.__client_socket.connect((self.__ip, self.__port))
-        self.__is_connected = True
+        def run(self):
+            server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            server_socket.bind((self.__ip, self.__port))
+            server_socket.listen(self.__backlog)
 
-    def receive_message(self):
-        return self.__client_socket.recv(1024).decode("UTF-16")
+            client_socket, client_address = server_socket.accept()
+            print(f"""Listener setup, server connected from port {client_address[1]}""")
 
-    def disconnect(self):
-        self.__client_socket.close()
-        self.__is_connected = False
+            client_socket.send("Connected to Client Listener".encode("UTF-16"))
+            while self.__keep_running:
+                client_message = client_socket.recv(1024).decode("UTF-16")
+                print(client_message)
 
-    @property
-    def is_connected(self):
-        return self.__is_connected
+            client_socket.close()
 
+            server_socket.close()
 
 if __name__ == "__main__":
     keep_running = True
     client = Client("127.0.0.1", 11003)
-    client_listener = Client_Listener("127.0.0.1", 10001)
+    listener_port = 12000
+    client_listener = Client_Listener("127.0.0.1", listener_port)
 
     while keep_running:
         print("=" * 80)
@@ -90,12 +91,14 @@ if __name__ == "__main__":
                 login = str(input("Please enter your user name>"))
                 password = str(input("Please enter your password>"))
                 request += login + "|" + password
+                who_from = login
                 client.send_message(request)
                 login_response = client.receive_message()
                 if login_response == "0|OK":
                     client.is_logged_in = True
                     print("Logged In")
                     client_listener.start()
+                    listener_port = listener_port + 1
                 else:
                     print(login_response)
 
@@ -110,7 +113,16 @@ if __name__ == "__main__":
 
         elif option == 3:
             # send message
-            pass
+            request = "MSG|"
+            request += who_from + "|"
+            msg_to = str(input("Enter the username of the recipient: "))
+            request += msg_to + "|"
+            the_msg = str(input("Enter the message: "))
+            request += the_msg
+            client.send_message(request)
+            response = client.receive_message()
+            print(response)
+
         elif option == 4:
             # print received messages
             pass
