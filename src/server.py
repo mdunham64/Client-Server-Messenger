@@ -156,37 +156,38 @@ class ClientWorker(Thread):
                 self._send_message(response)
 
             elif arguments[0] == "LOG":  # LOG|USERNAME|PASSWORD
-                # enter user credential information, differeniate ports
+                # enter user credential information, differentiate ports
+                logged_in_checker = False
+                credential_checker = False
                 for c in self.__server.list_cw:
                     if c.user.username == arguments[1]:
-                        response = "2|Already Logged In"
-                        self._send_message(response)
-                        return
+                        logged_in_checker = True
                 for u in self.__server.user_list:
-                    if arguments[1] == u.username:
-                        if arguments[2] == u.password:
-                            response = "0|OK"
-                            self.__user.username = arguments[1]
-                            self.__user.password = arguments[2]
-                            self._send_message(response)
-                            for cw in self.__server.list_cw:
-                                print(cw.user.username + " line 169")
-                            return
-                        else:
-                            response = "1|Invalid password"
-                            self._send_message(response)
-                    else:
-                        response = "1|Invalid Credentials"
-                        self._send_message(response)
+                    if u.username == arguments[1]:
+                        if u.password == arguments[2]:
+                            credential_checker = True
+                if logged_in_checker:
+                    response = "2|Already Logged In"
+                    self._send_message(response)
+                    return
+                if credential_checker:
+                    response = "0|OK"
+                    self.__user.username = arguments[1]
+                    self.__user.password = arguments[2]
+                    self._send_message(response)
+                    return
+                if not credential_checker:
+                    response = "1|Invalid Credentials"
+                    self._send_message(response)
+                    return
             elif arguments[0] == "OUT":  # OUT|OK
                 response = "0|OK"
                 self.__keep_running_client = False
                 self.__server.list_cw.remove(self)
-                for cw in self.__server.list_cw:
-                    print(cw.user.username + " the end")
                 self._send_message(response)
             elif arguments[0] == "MSG":  # MSG|USERNAME_FROM|USERNAME_TO|MESSAGE
                 response = "0|OK"
+                self._send_message(response)
             else:
                 response = "ERR|Unknown Command."
                 pass
