@@ -101,6 +101,7 @@ if __name__ == "__main__":
                     request += login + "|" + password + "|" + display_name
                     client.send_message(request)
                     response = client.receive_message()
+                    print(response)
             else:
                 print("Please connect to the server before logging in...")
 

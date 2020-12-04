@@ -49,7 +49,9 @@ class Server(Thread):
         self.__connection_count = 0
         self.__list_cw = []
         self.__user_list = []
-        # create diction {String (Name) : List (Pending Messages)}
+        self.__messages_to_relay = {"": []}
+        # create diction {String (to Name) : List (Pending Messages)}
+
     @property
     def list_cw(self):
         return self.__list_cw
@@ -125,7 +127,6 @@ class ClientWorker(Thread):
         self._display_message(f"""RCV>> {msg}""")
         return msg
 
-
     def _process_client_request(self):
         client_message = self._receive_message()
         self._display_message(f"CLIENT SAID>>>{client_message}")
@@ -150,8 +151,6 @@ class ClientWorker(Thread):
                     new_user.display_name = arguments[3]
                     self.__server.user_list.append(new_user)
                     response = "0|OK"
-                    for u in self.__server.user_list:
-                        print("LINE 150" + u.username + "|" + u.password)
 
                 self._send_message(response)
 
