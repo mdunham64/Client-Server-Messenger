@@ -1,9 +1,19 @@
 # INSTRUCTIONS FOR RUNNING
-You can start the program by running the server.py file. Then you may run the client as many times are you would like.
+You can start the program by running the server.py file. <br />
+You must load from the files before staring the messenger service. If you run the messenger service without loading from file,<br> create users, and
+then save, you will overwrite the pre-loaded users.<br>
+Then you may run the client.py as many times are you would like.
 <br />
 <br />
-To create a new user there is a sub menu under the login option on the client main menu.
-<br /><br /><br />
+To create a new user there is a sub menu under the login option on the client main menu.<br>
+You may also choose to login with a pre-loaded User. Here is your login info:<br>
+username: Oleksiy <br>
+password: 3920 <br>
+<br />
+We encourage you to fire up a few clients, login, send messages around, load some messages, don't load some, save and<br>
+safely shut down the server. Feel free to re-run, log in, and load undelivered messages and just keep playing with it. <br>
+You will see everything is functional and works correctly as outlined in the assignment.<br>
+
 # server.py functionality 
 #### Below is a breakdown of each class and its purpose: 
 `User:`

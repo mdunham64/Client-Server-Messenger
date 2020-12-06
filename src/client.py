@@ -51,7 +51,6 @@ class Client_Listener(Thread): # server worker
             for msg in self.__list_of_messages:
                 print(msg)
 
-
         def run(self):
             print("Started Listener")
 
@@ -122,6 +121,11 @@ if __name__ == "__main__":
 
         elif option == 4:
             # print received messages
+            request = "PRM|"
+            request += who_from
+            client.send_message(request)
+            response = client.receive_message()
+            print(response)
             pass
         elif option == 5:
             # send protocol OUT|OK

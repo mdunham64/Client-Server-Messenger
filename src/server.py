@@ -50,7 +50,7 @@ class Server(Thread):
         self.__list_cw = []
         self.__user_list = []
         self.__messages_to_relay = {"": []}
-        # create diction {String (to Name) : List (Pending Messages)}
+        self.stored_messages = {"": []}
 
     @property
     def list_cw(self):
@@ -103,7 +103,7 @@ class ClientWorker(Thread):
         return self.__user
 
     def run(self):
-        self._send_message("Connected to Python Library Server")
+        self._send_message("Connected to Messenger Service")
 
         while self.__keep_running_client:
             self._process_client_request()
@@ -185,8 +185,34 @@ class ClientWorker(Thread):
                 self.__server.list_cw.remove(self)
                 self._send_message(response)
             elif arguments[0] == "MSG":  # MSG|USERNAME_FROM|USERNAME_TO|MESSAGE
-                response = "0|OK"
+                for u in self.__server.user_list:
+                    if arguments[2] == u.username:
+                            msg_deliverable = arguments[3] + " - From:  " + arguments[1]
+                            if arguments[2] in self.__server.stored_messages:
+                                self.__server.stored_messages[arguments[2]].append(msg_deliverable)
+                                response = "0|message was received/stored successfully"
+                                self._send_message(response)
+                                return
+                            else:
+                                self.__server.stored_messages[arguments[2]] = []
+                                self.__server.stored_messages[arguments[2]].append(msg_deliverable)
+                                response = "0|message was received/stored successfully"
+                                self._send_message(response)
+                                return
+                response = "2|No Target User"
                 self._send_message(response)
+                print(self.__server.stored_messages)
+
+            elif arguments[0] == "PRM":
+                response = "Your Messages: \n"
+                if arguments[1] in self.__server.stored_messages:
+                    popped_strings = self.__server.stored_messages.pop(arguments[1])
+                    response += ' \n '.join(popped_strings)
+                    self._send_message(response)
+                else:
+                    response = "No New Messages"
+                    self._send_message(response)
+
             else:
                 response = "ERR|Unknown Command."
                 pass
@@ -209,8 +235,20 @@ if __name__ == '__main__':
         print("-" * 80)
         option = int(input("Select option [1-4]>"))
         if option == 1:
-            # load data from file (STORE THIS as server to override it)
-            pass
+            the_list = []
+            with open('userlist.json') as f:
+                for jsonObj in f:
+                    user_dict = json.loads(jsonObj)
+                    the_list.append(user_dict)
+                for entry in the_list:
+                    new_user = User()
+                    new_user.username = entry['_User__username']
+                    new_user.password = entry['_User__password']
+                    new_user.message_list = entry['message_list']
+                    server.user_list.append(new_user)
+            with open("pending_messages.json", "r") as f:
+                for jsonObj in f:
+                    server.stored_messages = json.loads(jsonObj)
         elif option == 2:
             try:
                 server.start()
@@ -219,7 +257,17 @@ if __name__ == '__main__':
         elif option == 3:
             server.terminate_server()
         elif option == 4:
-            # Save data to file
-            pass
+            # Save users to file
+            empty = ""
+            f = open("userlist.json", "w")
+            f.write(empty)
+            f.close()
+            for u in server.user_list:
+                with open('userlist.json', 'a') as json_users:
+                    json.dump(u.__dict__, json_users)
+                    json_users.write("\n")
+            #save pending messages to file
+            with open("pending_messages.json", "w") as f:
+                json.dump(server.stored_messages, f)
         else:
             print("Invalid option, try again. \n\n")
