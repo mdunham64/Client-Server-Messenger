@@ -1,3 +1,4 @@
+
 # INSTRUCTIONS FOR RUNNING
 You can start the program by running the server.py file. <br />
 You must load from the files before staring the messenger service. If you run the messenger service without loading from file,<br> create users, and
@@ -14,6 +15,11 @@ We encourage you to fire up a few clients, login, send messages around, load som
 safely shut down the server. Feel free to re-run, log in, and load undelivered messages and just keep playing with it. <br>
 You will see everything is functional and works correctly as outlined in the assignment.<br>
 
+Programmers:<br>
+MacGyver Dunham<br>
+Jake Bush<br>
+Ronald Jenkins<br>
+Savannah Murphy<br>
 # server.py functionality 
 #### Below is a breakdown of each class and its purpose: 
 `User:`
